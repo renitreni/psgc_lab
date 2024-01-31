@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\PSGC\GeographicCacheService;
 use App\PSGC\GeographicContract;
 use App\PSGC\GeographicService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
                 new GeographicService
             );
         });
+
+        Gate::define('viewPulse', function (User $user) {
+            return true;
+        });
     }
 
     /**
@@ -26,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (app()->environment('local')) {
+            DB::listen(function ($query) {
+                logger(Str::replaceArray('?', $query->bindings, $query->sql));
+            });
+        }
     }
 }
